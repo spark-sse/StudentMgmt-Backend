@@ -5,6 +5,10 @@ db:
     synchronize: true
     dropSchema: true
 
+authentication:
+    issuerUrl: "placeholder"
+    jwksUrl: "placeholder"
+
 mailing:
     enabled: false
     from: "no-reply@student-mgmt-system"

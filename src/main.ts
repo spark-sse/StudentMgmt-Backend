@@ -2,11 +2,12 @@ import { Logger, LogLevel, ValidationPipe } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import { NestExpressApplication } from "@nestjs/platform-express";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
+import * as dotenv from "dotenv";
 import { getConnection } from "typeorm";
 import { DEMO_CONFIG } from "../test/db-setup/demo";
 import { StudentMgmtDbEntities } from "../test/utils/demo-db";
 import { Config } from "./.config/config";
-import { environment, env } from "./.config/environment";
+import { env, environment } from "./.config/environment";
 import {
 	IndividualPercentWithAllowedFailuresRuleDto,
 	OverallPercentRuleDto
@@ -20,6 +21,7 @@ import { EntityAlreadyExistsFilter } from "./shared/entity-already-exists.filter
 import { EntityNotFoundFilter } from "./shared/entity-not-found.filter";
 import { RoundingBehavior } from "./utils/math";
 import { VERSION } from "./version";
+dotenv.config();
 
 async function bootstrap(): Promise<void> {
 	const version = VERSION;

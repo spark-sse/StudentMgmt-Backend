@@ -7,10 +7,10 @@ import { CacheService } from "./cache.service";
 import { AuthController } from "./controllers/auth.controller";
 import { AuthGuard } from "./guards/auth.guard";
 import { AuthStrategy } from "./guards/auth.strategy";
+import { OAuthStrategy } from "./guards/oauth.strategy";
 import { RoleGuard } from "./guards/role.guard";
-import { SparkyAuthStrategy } from "./guards/sparky-auth.strategy";
 import { TestUserAuthStrategy } from "./guards/test-user-auth.strategy";
-import { SparkyService } from "./services/sparky.service";
+// import { SessionSerializer } from "./oauth.strategy";
 import { AuthService } from "./services/auth.service";
 
 @Module({
@@ -18,19 +18,17 @@ import { AuthService } from "./services/auth.service";
 	controllers: [AuthController],
 	providers: [
 		AuthService,
-		SparkyService,
 		CacheService,
 		RoleGuard,
-		SparkyAuthStrategy,
+		AuthGuard,
+		OAuthStrategy,
 		{
 			provide: AuthStrategy,
-			useClass: (() =>
-				environment.is("development", "demo", "testing")
-					? TestUserAuthStrategy
-					: SparkyAuthStrategy)()
-		},
-		AuthGuard
+			useClass: environment.is("development", "demo", "testing")
+				? TestUserAuthStrategy
+				: OAuthStrategy
+		}
 	],
-	exports: [AuthGuard, AuthStrategy]
+	exports: [AuthGuard, AuthStrategy, HttpModule, AuthService]
 })
 export class AuthModule {}

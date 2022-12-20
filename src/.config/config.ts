@@ -15,7 +15,8 @@ export class Config {
 			logger: {},
 			notifications: {},
 			authentication: {
-				url: env("AUTHENTICATION_BASE_PATH") ?? cfg.authentication?.url
+				issuerUrl: env("AUTH_ISSUER_URL") ?? cfg.authentication.issuerUrl,
+				jwksUrl: env("AUTH_JWKS_URL") ?? cfg.authentication.jwksUrl
 			},
 			server: {
 				basePath: env("SERVER_BASE_PATH") ?? cfg.server?.basePath,
@@ -109,7 +110,8 @@ const db = y
 	.required();
 
 const authentication = y.object({
-	url: y.string().required()
+	issuerUrl: y.string().required(),
+	jwksUrl: y.string().required()
 });
 
 const mailing = y
@@ -171,4 +173,4 @@ export const configValidationSchemas = {
 
 export const configSchema = y.object(configValidationSchemas).required();
 
-type ConfigurationSettings = y.InferType<typeof configSchema>;
+export type ConfigurationSettings = y.InferType<typeof configSchema>;

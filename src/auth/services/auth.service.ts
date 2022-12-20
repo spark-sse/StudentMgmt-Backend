@@ -5,39 +5,22 @@ import { UserDto } from "../../shared/dto/user.dto";
 import { User } from "../../shared/entities/user.entity";
 import { UserRole } from "../../shared/enums";
 import { UserRepository } from "../../user/repositories/user.repository";
-import { AuthInfo } from "../dto/auth-info.dto";
-import { AuthResultDto } from "../dto/auth-result.dto";
-import { CredentialsDto } from "../dto/credentials.dto";
-import { SparkyService } from "./sparky.service";
+
+type AuthInfo = {
+	username: string;
+	preferredUsername: string;
+	email: string;
+};
 
 @Injectable()
 export class AuthService {
 	private readonly logger = new Logger(AuthService.name);
 
-	constructor(
-		@InjectRepository(UserRepository) private userRepository: UserRepository,
-		private sparkyService: SparkyService
-	) {}
+	constructor(@InjectRepository(UserRepository) private userRepository: UserRepository) {}
 
 	async getUserById(id: string): Promise<UserDto> {
 		const user = await this.userRepository.getUserById(id);
 		return DtoFactory.createUserDto(user);
-	}
-
-	/**
-	 * Attempts to authenticate the user with {@link SparkyService} using the given credentials.
-	 * If the user does not exists already, a new {@link User} will be created.
-	 *
-	 * @param credentials
-	 */
-	async login(credentials: CredentialsDto): Promise<AuthResultDto> {
-		const authInfo = await this.sparkyService.authenticate(credentials);
-		const user = await this.getOrCreateUser(authInfo);
-		return {
-			user,
-			accessToken: authInfo.token.token,
-			expiration: authInfo.token.expiration ? new Date(authInfo.token.expiration) : undefined
-		};
 	}
 
 	/**
@@ -48,7 +31,7 @@ export class AuthService {
 	 */
 	async getOrCreateUser(extUser: AuthInfo): Promise<UserDto> {
 		// Try to find user in this system
-		let intUser = await this.userRepository.tryGetUserByUsername(extUser.user.username);
+		let intUser = await this.userRepository.tryGetUserByUsername(extUser.username);
 
 		if (!intUser) {
 			// User does not exist, create account in this system
@@ -68,8 +51,8 @@ export class AuthService {
 	async updateUser(user: User, authInfo: AuthInfo): Promise<User> {
 		return this.userRepository.updateUser(user.id, {
 			...user,
-			email: authInfo.user.settings.emailAddress,
-			displayName: authInfo.user.fullName ?? user.username
+			email: authInfo.email,
+			displayName: authInfo.preferredUsername ?? user.username
 		});
 	}
 
@@ -77,42 +60,21 @@ export class AuthService {
 	 * Returns `true`, if the user's `email` or `displayName` have been changed by Sparkyservice.
 	 */
 	userInfoHasChanged(user: User, authInfo: AuthInfo): boolean {
-		return (
-			user.email !== authInfo.user.settings.emailAddress ||
-			user.displayName !== authInfo.user.fullName
-		);
+		return user.email !== authInfo.email || user.displayName !== authInfo.preferredUsername;
 	}
 
 	async createUser(authInfo: AuthInfo): Promise<User> {
-		const username = authInfo.user.username;
+		const username = authInfo.username;
 		const displayName =
-			authInfo.user.fullName?.length > 0 ? authInfo.user.fullName : authInfo.user.username;
-		const role = this.determineRole(authInfo.user.role);
-		const email = authInfo.user.settings?.emailAddress;
+			authInfo.preferredUsername?.length > 0 ? authInfo.preferredUsername : authInfo.username;
+		const email = authInfo.email;
 
 		return this.userRepository.createUser({
 			id: undefined,
 			username,
 			displayName,
 			email,
-			role
+			role: UserRole.USER
 		});
-	}
-
-	/**
-	 * Determines the role of a new account.
-	 * @param role Role given by the Sparkyservice.
-	 */
-	private determineRole(role: string): UserRole {
-		switch (role) {
-			case "DEFAULT":
-				return UserRole.USER;
-			case "ADMIN":
-				return UserRole.SYSTEM_ADMIN;
-			case "SERVICE":
-				return UserRole.ADMIN_TOOL;
-			default:
-				return UserRole.USER;
-		}
 	}
 }

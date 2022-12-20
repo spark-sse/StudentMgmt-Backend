@@ -1,7 +1,7 @@
+import { DeepPartial } from "typeorm";
+import * as y from "yup";
 import { ValidationError } from "yup";
 import { Config, configSchema, configValidationSchemas } from "../../../src/.config/config";
-import * as y from "yup";
-import { DeepPartial } from "typeorm";
 
 const validConfig = {
 	server: {
@@ -23,10 +23,20 @@ const validConfig = {
 		subscribers: []
 	},
 	mailing: {
-		enabled: false
+		enabled: false,
+		clientBasePath: "placeholder",
+		from: "placeholder",
+		smtp: {
+			host: "placeholder",
+			username: "placeholder",
+			password: "placeholder",
+			port: 0,
+			useSecureConnection: false
+		}
 	},
 	authentication: {
-		url: "http://localhost:8080"
+		issuerUrl: "issuerUrl",
+		jwksUrl: "jwksUrl"
 	},
 	logger: {
 		levels: ["error", "warn", "debug", "verbose"],
@@ -62,6 +72,7 @@ describe("Config Validation", () => {
 				configSchema.validateSync(validConfig, { abortEarly: false });
 				expect(true).toEqual(true);
 			} catch (error) {
+				console.log(error);
 				expect(error).toBeUndefined();
 			}
 		});
@@ -87,20 +98,41 @@ describe("Config Validation", () => {
 				}
 			}
 		});
-		it("Empty Object -> 17 errors", () => {
+		it("Empty Object -> Error", () => {
 			try {
 				configSchema.validateSync({}, { abortEarly: false });
+				expect(false).toEqual(true);
 			} catch (error) {
 				if (error instanceof ValidationError) {
-					expect(error.errors).toHaveLength(17);
+					expect(error.errors).toMatchInlineSnapshot(`
+Array [
+  "server.basePath is a required field",
+  "server.port is a required field",
+  "db.type is a required field",
+  "db.port is a required field",
+  "db.database is a required field",
+  "db.host is a required field",
+  "db.username is a required field",
+  "db.password is a required field",
+  "db.synchronize is a required field",
+  "db.dropSchema is a required field",
+  "authentication.issuerUrl is a required field",
+  "authentication.jwksUrl is a required field",
+  "notifications.enabled is a required field",
+  "mailing.enabled is a required field",
+  "mailing.smtp.host is a required field",
+  "mailing.smtp.port is a required field",
+  "mailing.smtp.useSecureConnection is a required field",
+  "mailing.smtp.username is a required field",
+]
+`);
 				}
 			}
 		});
 
-		it("Empty Object for each key -> 17 errors", () => {
+		it("Empty Object for each key -> Error", () => {
 			const emptyConfig: DeepPartial<ReturnType<typeof Config["get"]>> = {
 				authentication: {},
-				client: {},
 				db: {},
 				logger: {},
 				mailing: {},
@@ -110,9 +142,31 @@ describe("Config Validation", () => {
 
 			try {
 				configSchema.validateSync(emptyConfig, { abortEarly: false });
+				expect(false).toEqual(true);
 			} catch (error) {
 				if (error instanceof ValidationError) {
-					expect(error.errors).toHaveLength(17);
+					expect(error.errors).toMatchInlineSnapshot(`
+Array [
+  "server.basePath is a required field",
+  "server.port is a required field",
+  "db.type is a required field",
+  "db.port is a required field",
+  "db.database is a required field",
+  "db.host is a required field",
+  "db.username is a required field",
+  "db.password is a required field",
+  "db.synchronize is a required field",
+  "db.dropSchema is a required field",
+  "authentication.issuerUrl is a required field",
+  "authentication.jwksUrl is a required field",
+  "notifications.enabled is a required field",
+  "mailing.enabled is a required field",
+  "mailing.smtp.host is a required field",
+  "mailing.smtp.port is a required field",
+  "mailing.smtp.useSecureConnection is a required field",
+  "mailing.smtp.username is a required field",
+]
+`);
 				}
 			}
 		});

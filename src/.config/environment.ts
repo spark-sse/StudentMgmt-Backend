@@ -3,7 +3,10 @@ type EnvironmentName = "development" | "demo" | "production" | "testing";
 type EnvironmentVariable =
 	| "NODE_ENV"
 	| "LOG_CONFIG"
-	| "AUTHENTICATION_BASE_PATH"
+	| "AUTH_ISSUER_URL"
+	| "AUTH_JWKS_URL"
+	| "AUTH_CLIENT_ID"
+	| "AUTH_CLIENT_SECRET"
 	| "SERVER_BASE_PATH"
 	| "SERVER_PORT"
 	| "CLIENT_BASE_PATH"

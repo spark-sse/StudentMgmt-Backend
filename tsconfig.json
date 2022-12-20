@@ -12,7 +12,9 @@
 		"incremental": true,
 		"jsx": "react",
 		"jsxFactory": "jsxt.createElement",
-		"jsxFragmentFactory": "jsxt.Fragment"
+		"jsxFragmentFactory": "jsxt.Fragment",
+		"skipDefaultLibCheck": true,
+		"skipLibCheck": true
 	},
 	"exclude": ["node_modules", "dist", "migrations_old"]
 }

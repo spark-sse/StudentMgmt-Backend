@@ -6,7 +6,7 @@ import { UserDto } from "../../shared/dto/user.dto";
 import { UserRepository } from "../../user/repositories/user.repository";
 import { CacheService } from "../cache.service";
 import { AuthStrategy } from "./auth.strategy";
-import { SparkyAuthStrategy } from "./sparky-auth.strategy";
+import { OAuthStrategy } from "./oauth.strategy";
 
 const jwtRegex = /^.+\..+\..+$/; // Matches JWT, i.e., xxxxx.yyyyy.zzzzz
 
@@ -14,7 +14,7 @@ const jwtRegex = /^.+\..+\..+$/; // Matches JWT, i.e., xxxxx.yyyyy.zzzzz
 export class TestUserAuthStrategy extends AuthStrategy {
 	constructor(
 		private cache: CacheService,
-		private sparkyAuth: SparkyAuthStrategy,
+		private oauth: OAuthStrategy,
 		@InjectRepository(UserRepository) private userRepository: UserRepository
 	) {
 		super();
@@ -25,8 +25,8 @@ export class TestUserAuthStrategy extends AuthStrategy {
 		const username = this.validateAuthHeader(request.headers.authorization);
 
 		if (this.isJwt(username)) {
-			// Allow authentication via Sparkyservice, if user supplied a JWT
-			return this.sparkyAuth.canActivate(context);
+			// Allow authentication via auth provider, if user supplied a JWT
+			return this.oauth.canActivate(context);
 		}
 
 		let user = this.cache.get<UserDto>(username);
