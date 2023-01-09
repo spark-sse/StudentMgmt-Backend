@@ -12,7 +12,9 @@ pipeline {
     stages {
     
         stage("Clean WS") {
-            cleanWs()
+            steps {
+                cleanWs()
+            }
         }
         stage('Prepare NodeJS') {
             agent {
