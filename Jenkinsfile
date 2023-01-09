@@ -22,13 +22,6 @@ pipeline {
                 }
             }
             stages {
-
-                stage('Prepare Workspace') {
-                    steps {
-                        cleanWs()
-                        git 'https://github.com/Student-Management-System/StudentMgmt-Backend.git'
-                    }
-                }
                 stage('Install Dependencies') {
                     steps {
                         sh 'npm install'
