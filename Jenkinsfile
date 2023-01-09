@@ -41,7 +41,7 @@ pipeline {
                 }
             }
         }
-
+        parallel {
         stage('Test') {
             agent {
                 label 'docker'
@@ -99,7 +99,7 @@ pipeline {
                 }
             }
         }
-
+        }
         stage('Deploy') {
             failFast true
             steps {
