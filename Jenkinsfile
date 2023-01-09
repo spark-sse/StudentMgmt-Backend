@@ -11,11 +11,7 @@ pipeline {
 
     stages {
     
-        stage("Clean WS") {
-            steps {
-                cleanWs()
-            }
-        }
+
         stage('Prepare NodeJS') {
             agent {
                 docker {
