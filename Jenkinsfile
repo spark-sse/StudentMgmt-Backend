@@ -11,15 +11,15 @@ pipeline {
 
     stages {
         stage('Prepare NodeJS') {
-            stages {
-                agent {
-                    docker {
-                        image 'node:18-bullseye'
-                        args '-v $HOME/.npm:/.npm'
-                        label 'docker'
-                        reuseNode true
-                    }
+            agent {
+                docker {
+                    image 'node:18-bullseye'
+                    args '-v $HOME/.npm:/.npm'
+                    label 'docker'
+                    reuseNode true
                 }
+            }
+            stages {
                 stage('Install Dependencies') {
                     steps {
                         sh 'npm install'
