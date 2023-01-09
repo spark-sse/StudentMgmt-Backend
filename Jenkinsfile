@@ -61,6 +61,7 @@ pipeline {
                         }
                     }
                 }
+                junit 'output/**/junit*.xml'
                 step([
                     $class: 'CloverPublisher',
                     cloverReportDir: 'output/test/coverage/',
@@ -70,11 +71,11 @@ pipeline {
                     failingTarget: [methodCoverage: 0, conditionalCoverage: 0, statementCoverage: 0] // optional, default is none
                 ])
             }
-            post {
-                always {
-                    junit 'output/**/junit*.xml'
-                }
-            }
+            //post {
+            //    always {
+            //        junit 'output/**/junit*.xml'
+            //    }
+            //}
         }
 
         stage('Build Docker') {
@@ -85,10 +86,7 @@ pipeline {
                 // Use build Dockerfile instead of Test-DB Dockerfile to build image
                 sh 'cp -f docker/Dockerfile Dockerfile'
                 script {
-                    // Based on:
-                    // - https://e.printstacktrace.blog/jenkins-pipeline-environment-variables-the-definitive-guide/
-                    // - https://stackoverflow.com/a/16817748
-                    // - https://stackoverflow.com/a/51991389
+                    // https://stackoverflow.com/a/16817748
                     env.API_VERSION = sh(returnStdout: true, script: 'grep -Po \'(?<=export const VERSION = ")[^";]+\' src/version.ts').trim()
                     echo "API: ${env.API_VERSION}"
                     dockerImage = docker.build 'e-learning-by-sse/qualityplus-student-management-service'
@@ -109,12 +107,17 @@ pipeline {
         }
 
         stage('Publish Results') {
+            agent {
+                label 'docker'
+            }
             steps {
                 archiveArtifacts artifacts: '*.tar.gz'
-
                 sleep(time: 40, unit: "SECONDS")
+                docker run 
+                sh "docker compose up -d"
                 sh "wget ${env.API_URL}"
                 archiveArtifacts artifacts: "${env.API_FILE}"
+                sh "docker compose down"
             }
         }
 
