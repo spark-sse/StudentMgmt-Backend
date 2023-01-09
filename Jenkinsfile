@@ -11,7 +11,7 @@ pipeline {
 
     stages {
     
-        stage("Clean WS) {
+        stage("Clean WS") {
             cleanWs()
         }
         stage('Prepare NodeJS') {
