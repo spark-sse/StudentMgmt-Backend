@@ -106,7 +106,6 @@ pipeline {
             steps {
                 archiveArtifacts artifacts: '*.tar.gz'
                 sleep(time: 40, unit: "SECONDS")
-                docker run 
                 sh "docker compose up -d"
                 sh "wget http://localhost:3000/${env.API_FILE}"
                 archiveArtifacts artifacts: "${env.API_FILE}"
