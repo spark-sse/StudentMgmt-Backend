@@ -43,7 +43,6 @@ pipeline {
         }
         
         stage('Docker Process') {
-        stages {
         parallel {
         stage('Test') {
             agent {
@@ -102,7 +101,7 @@ pipeline {
                 }
             }
         }
-        }}
+        }
         }
         stage('Deploy') {
             failFast true
