@@ -1,18 +1,17 @@
 def dockerImage
 
 pipeline {
-    agent none
+    agent {
+      label 'docker' }
 
     environment {
         DEMO_SERVER = '147.172.178.30'
         DEMO_SERVER_PORT = '3000'
         DEMO_USER = 'jenkins'
         API_FILE = 'api-json'
-        API_URL = "http://${env.DEMO_SERVER}:${env.DEMO_SERVER_PORT}/${env.API_FILE}"
     }
 
     stages {
-    
 
         stage('Prepare NodeJS') {
             agent {
@@ -47,9 +46,6 @@ pipeline {
         stage('Prepare parallel Docker builds') {
             parallel {
                 stage('Test') {
-                    agent {
-                        label 'docker'
-                    }
                     environment {
                         POSTGRES_DB = 'StudentMgmtDb'
                         POSTGRES_USER = 'postgres'
@@ -85,9 +81,6 @@ pipeline {
                 }
 
                 stage('Build Docker Image') {
-                    agent {
-                        label 'docker'
-                    }
                     steps {
                         // Use build Dockerfile instead of Test-DB Dockerfile to build image
                         sh 'cp -f docker/Dockerfile Dockerfile'
@@ -99,10 +92,7 @@ pipeline {
             }
         }
         
-        stage('Publish Results') {
-            agent {
-                label 'docker'
-            }
+        stage('Publish Results and Image') {
             steps {
                 archiveArtifacts artifacts: '*.tar.gz'
                 sleep(time: 40, unit: "SECONDS")
@@ -123,9 +113,6 @@ pipeline {
         }
         
         stage('Deploy') {
-            agent {
-                label 'docker'
-            }
             failFast true
             steps {
                 sshagent(['STM-SSH-DEMO']) {
@@ -150,6 +137,13 @@ pipeline {
             steps {
                 build job: 'Teaching_StudentMgmt-API-Client', parameters: [string(name: 'API', value: 'STU-MGMT')], wait: false
             }
+        }
+    }
+    post {
+        always {
+            // Send e-mails if build becomes unstable/fails or returns stable
+            // Based on: https://stackoverflow.com/a/39178479
+			sh "echo hi"
         }
     }
 }
