@@ -51,10 +51,11 @@ pipeline {
                 POSTGRES_USER = 'postgres'
                 POSTGRES_PASSWORD = 'admin'
             }
+            failfast false
             steps {
                 script {
-                    docker.image('postgres:14.1-alpine').withRun("-e POSTGRES_USER=${env.POSTGRES_USER} -e POSTGRES_PASSWORD=${env.POSTGRES_PASSWORD} -e POSTGRES_DB=${env.POSTGRES_DB}") { c ->
-                        docker.image('postgres:14.1-alpine').inside("--link ${c.id}:db") {
+                    docker.image('postgres:14-alpine').withRun("-e POSTGRES_USER=${env.POSTGRES_USER} -e POSTGRES_PASSWORD=${env.POSTGRES_PASSWORD} -e POSTGRES_DB=${env.POSTGRES_DB}") { c ->
+                        docker.image('postgres:14-alpine').inside("--link ${c.id}:db") {
                             //sh 'until pg_isready; do sleep 5; done' // currently not working
                             sh "sleep 20"
                         }
@@ -116,7 +117,7 @@ pipeline {
                 sleep(time: 40, unit: "SECONDS")
                 docker run 
                 sh "docker compose up -d"
-                sh "wget ${env.API_URL}"
+                sh "wget http://localhost:3000/${env.API_FILE}"
                 archiveArtifacts artifacts: "${env.API_FILE}"
                 sh "docker compose down"
             }
