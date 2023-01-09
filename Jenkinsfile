@@ -44,8 +44,8 @@ pipeline {
             }
         }
         
-        //stage('Prepare parallel Docker builds') {
-        //    parallel {
+        stage('Prepare parallel Docker builds') {
+            parallel {
                 stage('Test') {
                     agent {
                         label 'docker'
@@ -96,8 +96,8 @@ pipeline {
                         }
                     }
                 }
-        //    }
-        //}
+            }
+        }
         
         stage('Publish Results') {
             agent {
