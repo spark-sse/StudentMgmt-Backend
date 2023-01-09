@@ -51,7 +51,6 @@ pipeline {
                 POSTGRES_USER = 'postgres'
                 POSTGRES_PASSWORD = 'admin'
             }
-            failfast false
             steps {
                 script {
                     docker.image('postgres:14-alpine').withRun("-e POSTGRES_USER=${env.POSTGRES_USER} -e POSTGRES_PASSWORD=${env.POSTGRES_PASSWORD} -e POSTGRES_DB=${env.POSTGRES_DB}") { c ->
@@ -84,6 +83,7 @@ pipeline {
             agent {
                 label 'docker'
             }
+            failFast false
             steps {
                 // Use build Dockerfile instead of Test-DB Dockerfile to build image
                 sh 'cp -f docker/Dockerfile Dockerfile'
@@ -101,6 +101,7 @@ pipeline {
         }
 
         stage('Deploy') {
+            failFast true
             steps {
                 sshagent(['STM-SSH-DEMO']) {
                     sh "ssh -o StrictHostKeyChecking=no -l ${env.DEMO_USER} ${env.DEMO_SERVER} bash /staging/update-compose-project.sh qualityplus-student-management-system"
