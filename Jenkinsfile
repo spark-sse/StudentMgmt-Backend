@@ -22,6 +22,11 @@ pipeline {
                 }
             }
             stages {
+                stage('Clean WS') {
+                    steps {
+                        cleanWs()
+                    }
+                }
                 stage('Install Dependencies') {
                     steps {
                         sh 'npm install'
