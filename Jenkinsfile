@@ -2,7 +2,8 @@ def dockerImage
 
 pipeline {
     agent {
-      label 'docker' }
+        label 'docker' 
+    }
 
     environment {
         DEMO_SERVER = '147.172.178.30'
@@ -99,7 +100,6 @@ pipeline {
                 sh "docker compose up -d"
                 sh "wget http://localhost:3000/${env.API_FILE}"
                 archiveArtifacts artifacts: "${env.API_FILE}"
-                sh "docker compose down"
                 script {
                     // https://stackoverflow.com/a/16817748
                     env.API_VERSION = sh(returnStdout: true, script: 'grep -Po \'(?<=export const VERSION = ")[^";]+\' src/version.ts').trim()
@@ -110,6 +110,11 @@ pipeline {
                     }
                 }
             }
+            post {
+                always {
+                    sh 'docker compose down'
+                }
+            } 
         }
         
         stage('Deploy') {
@@ -143,7 +148,11 @@ pipeline {
         always {
             // Send e-mails if build becomes unstable/fails or returns stable
             // Based on: https://stackoverflow.com/a/39178479
-			sh "echo hi"
+            load "$JENKINS_HOME/.envvars/emails.groovy"
+            step([$class: 'Mailer', recipients: "${env.elsharkawy}, ${env.klingebiel}", notifyEveryUnstableBuild: true, sendToIndividuals: false])
+
+            // Report static analyses
+            recordIssues enabledForFailure: false, tool: checkStyle(pattern: 'output/eslint/eslint.xml')
         }
     }
 }
