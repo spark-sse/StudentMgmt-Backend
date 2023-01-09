@@ -1,3 +1,5 @@
+def dockerImage
+
 pipeline {
     agent none
 
@@ -90,14 +92,8 @@ pipeline {
                 // Use build Dockerfile instead of Test-DB Dockerfile to build image
                 sh 'cp -f docker/Dockerfile Dockerfile'
                 script {
-                    // https://stackoverflow.com/a/16817748
-                    env.API_VERSION = sh(returnStdout: true, script: 'grep -Po \'(?<=export const VERSION = ")[^";]+\' src/version.ts').trim()
-                    echo "API: ${env.API_VERSION}"
                     dockerImage = docker.build 'e-learning-by-sse/qualityplus-student-management-service'
-                    docker.withRegistry('https://ghcr.io', 'github-ssejenkins') {
-                        dockerImage.push("${env.API_VERSION}")
-                        dockerImage.push('latest')
-                    }
+
                 }
             }
         }
@@ -124,6 +120,15 @@ pipeline {
                 sh "wget http://localhost:3000/${env.API_FILE}"
                 archiveArtifacts artifacts: "${env.API_FILE}"
                 sh "docker compose down"
+                script {
+                    // https://stackoverflow.com/a/16817748
+                    env.API_VERSION = sh(returnStdout: true, script: 'grep -Po \'(?<=export const VERSION = ")[^";]+\' src/version.ts').trim()
+                    echo "API: ${env.API_VERSION}"
+                    docker.withRegistry('https://ghcr.io', 'github-ssejenkins') {
+                        dockerImage.push("${env.API_VERSION}")
+                        dockerImage.push('latest')
+                    }
+                }
             }
         }
 
