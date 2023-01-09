@@ -74,6 +74,7 @@ export class Config {
 		}
 
 		try {
+			console.log(this._config);
 			configSchema.validateSync(this._config, { abortEarly: false });
 		} catch (error) {
 			console.error(
