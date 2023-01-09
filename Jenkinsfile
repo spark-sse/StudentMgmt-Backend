@@ -62,8 +62,6 @@ pipeline {
                         }
                     }
                 }
-                sh 'ls output/'
-                junit 'output/**/junit*.xml'
                 step([
                     $class: 'CloverPublisher',
                     cloverReportDir: 'output/test/coverage/',
@@ -73,11 +71,12 @@ pipeline {
                     failingTarget: [methodCoverage: 0, conditionalCoverage: 0, statementCoverage: 0] // optional, default is none
                 ])
             }
-            //post {
-            //    always {
-            //        junit 'output/**/junit*.xml'
-            //    }
-            //}
+            post {
+                always {
+                    junit 'output/**/junit*.xml'
+                     sh 'ls output/'
+                }
+            }
         }
 
         stage('Build Docker') {
