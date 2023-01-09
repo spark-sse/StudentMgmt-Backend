@@ -10,7 +10,7 @@ pipeline {
     environment {
         DEMO_SERVER = '147.172.178.30'
         DEMO_SERVER_PORT = '3000'
-        DEMO_USER = 'jenkinsci'
+        DEMO_USER = 'jenkins'
         API_FILE = 'api-json'
         API_URL = "http://${env.DEMO_SERVER}:${env.DEMO_SERVER_PORT}/${env.API_FILE}"
     }
@@ -45,12 +45,11 @@ pipeline {
             }
             steps {
                 script {
-                    docker.image('postgres:14.1-alpine').withRun("-e POSTGRES_USER=${env.POSTGRES_USER} -e POSTGRES_PASSWORD=${env.POSTGRES_PASSWORD} -e POSTGRES_DB=${env.POSTGRES_DB}") {
-                        c ->
-                            docker.image('postgres:14.1-alpine').inside("--link ${c.id}:db") {
-                                //sh 'until pg_isready; do sleep 5; done' // currently not working
-                                sh "sleep 20"
-                            }
+                    docker.image('postgres:14.1-alpine').withRun("-e POSTGRES_USER=${env.POSTGRES_USER} -e POSTGRES_PASSWORD=${env.POSTGRES_PASSWORD} -e POSTGRES_DB=${env.POSTGRES_DB}") { c ->
+                        docker.image('postgres:14.1-alpine').inside("--link ${c.id}:db") {
+                            //sh 'until pg_isready; do sleep 5; done' // currently not working
+                            sh "sleep 20"
+                        }
                         docker.image('node:18-bullseye').inside("--link ${c.id}:db") {
                             sh 'npm run test:jenkins'
                         }
