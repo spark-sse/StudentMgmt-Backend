@@ -44,70 +44,61 @@ pipeline {
             }
         }
         
-        stage('Docker Process') {
-        parallel {
-        stage('Test') {
-            agent {
-                label 'docker'
-            }
-            environment {
-                POSTGRES_DB = 'StudentMgmtDb'
-                POSTGRES_USER = 'postgres'
-                POSTGRES_PASSWORD = 'admin'
-            }
-            steps {
-                script {
-                    docker.image('postgres:14-alpine').withRun("-e POSTGRES_USER=${env.POSTGRES_USER} -e POSTGRES_PASSWORD=${env.POSTGRES_PASSWORD} -e POSTGRES_DB=${env.POSTGRES_DB}") { c ->
-                        docker.image('postgres:14-alpine').inside("--link ${c.id}:db") {
-                            //sh 'until pg_isready; do sleep 5; done' // currently not working
-                            sh "sleep 20"
+        //stage('Prepare parallel Docker builds') {
+        //    parallel {
+                stage('Test') {
+                    agent {
+                        label 'docker'
+                    }
+                    environment {
+                        POSTGRES_DB = 'StudentMgmtDb'
+                        POSTGRES_USER = 'postgres'
+                        POSTGRES_PASSWORD = 'admin'
+                    }
+                    failFast false
+                    steps {
+                        script {
+                            docker.image('postgres:14-alpine').withRun("-e POSTGRES_USER=${env.POSTGRES_USER} -e POSTGRES_PASSWORD=${env.POSTGRES_PASSWORD} -e POSTGRES_DB=${env.POSTGRES_DB}") { c ->
+                                docker.image('postgres:14-alpine').inside("--link ${c.id}:db") {
+                                    //sh 'until pg_isready; do sleep 5; done' // currently not working
+                                    sh "sleep 20"
+                                }
+                                docker.image('node:18-bullseye').inside("--link ${c.id}:db") {
+                                    sh 'npm run test:jenkins'
+                                }
+                            }
                         }
-                        docker.image('node:18-bullseye').inside("--link ${c.id}:db") {
-                            sh 'npm run test:jenkins'
+                        step([
+                            $class: 'CloverPublisher',
+                            cloverReportDir: 'output/test/coverage/',
+                            cloverReportFileName: 'clover.xml',
+                            healthyTarget: [methodCoverage: 70, conditionalCoverage: 80, statementCoverage: 80], // optional, default is: method=70, conditional=80, statement=80
+                            unhealthyTarget: [methodCoverage: 50, conditionalCoverage: 50, statementCoverage: 50], // optional, default is none
+                            failingTarget: [methodCoverage: 0, conditionalCoverage: 0, statementCoverage: 0] // optional, default is none
+                        ])
+                    }
+                    post {
+                        always {
+                            junit 'output/**/junit*.xml'
                         }
                     }
                 }
-                step([
-                    $class: 'CloverPublisher',
-                    cloverReportDir: 'output/test/coverage/',
-                    cloverReportFileName: 'clover.xml',
-                    healthyTarget: [methodCoverage: 70, conditionalCoverage: 80, statementCoverage: 80], // optional, default is: method=70, conditional=80, statement=80
-                    unhealthyTarget: [methodCoverage: 50, conditionalCoverage: 50, statementCoverage: 50], // optional, default is none
-                    failingTarget: [methodCoverage: 0, conditionalCoverage: 0, statementCoverage: 0] // optional, default is none
-                ])
-            }
-            post {
-                always {
-                    junit 'output/**/junit*.xml'
-                }
-            }
-        }
 
-        stage('Build Docker') {
-            agent {
-                label 'docker'
-            }
-            failFast false
-            steps {
-                // Use build Dockerfile instead of Test-DB Dockerfile to build image
-                sh 'cp -f docker/Dockerfile Dockerfile'
-                script {
-                    dockerImage = docker.build 'e-learning-by-sse/qualityplus-student-management-service'
-
+                stage('Build Docker Image') {
+                    agent {
+                        label 'docker'
+                    }
+                    steps {
+                        // Use build Dockerfile instead of Test-DB Dockerfile to build image
+                        sh 'cp -f docker/Dockerfile Dockerfile'
+                        script {
+                            dockerImage = docker.build 'e-learning-by-sse/qualityplus-student-management-service'
+                        }
+                    }
                 }
-            }
-        }
-        }
-        }
-        stage('Deploy') {
-            failFast true
-            steps {
-                sshagent(['STM-SSH-DEMO']) {
-                    sh "ssh -o StrictHostKeyChecking=no -l ${env.DEMO_USER} ${env.DEMO_SERVER} bash /staging/update-compose-project.sh qualityplus-student-management-system"
-                }
-            }
-        }
-
+        //    }
+        //}
+        
         stage('Publish Results') {
             agent {
                 label 'docker'
@@ -128,6 +119,18 @@ pipeline {
                         dockerImage.push("${env.API_VERSION}")
                         dockerImage.push('latest')
                     }
+                }
+            }
+        }
+        
+        stage('Deploy') {
+            agent {
+                label 'docker'
+            }
+            failFast true
+            steps {
+                sshagent(['STM-SSH-DEMO']) {
+                    sh "ssh -o StrictHostKeyChecking=no -l ${env.DEMO_USER} ${env.DEMO_SERVER} bash /staging/update-compose-project.sh qualityplus-student-management-system"
                 }
             }
         }
